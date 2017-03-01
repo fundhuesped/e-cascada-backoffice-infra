@@ -1,0 +1,1 @@
+sed s/SERVERNAME/$SERVERNAME/  < nginx-site-template/turnos > nginx/sites-available/turnos

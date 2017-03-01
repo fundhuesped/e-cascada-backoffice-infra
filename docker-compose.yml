@@ -1,0 +1,45 @@
+version: '2'
+services:
+  nginx:
+    restart: always
+    image: nginx:stable
+    volumes:
+      - ./nginx:/etc/nginx:ro
+      - ./src/turnos-backoffice-fe/app:/usr/share/nginx/html/turnos-backoffice-fe
+      - ./django-static:/usr/share/nginx/html/django-static
+    ports:
+      - "80:80"
+    depends_on:
+      - be
+  db_data:
+    image: busybox
+    command: "true"
+    volumes:
+      - /var/lib/postgresql/data
+  db:
+    restart: always
+    image: postgres:9.5
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${DBUSER}
+      - POSTGRES_PASSWORD=${DBPASSWORD}
+      - POSTGRES_DB=${DBNAME}
+    volumes_from:
+      - db_data
+  be:
+    restart: always
+    build: ./src/turnos-backoffice-be/
+    command: bash -c "python manage.py migrate && gunicorn -b 0.0.0.0:8000 huesped_backend.wsgi"
+    volumes:
+      - ./src/turnos-backoffice-be/:/code
+    links:
+      - db
+    environment:
+      - DB_USER=${DBUSER}
+      - DB_PASSWORD=${DBPASSWORD}
+      - DB_NAME=${DBNAME}
+      - DB_HOST=db
+      - DB_PORT=5432
+    ports:
+      - "8000:8000"

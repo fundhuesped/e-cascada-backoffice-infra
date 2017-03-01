@@ -1,0 +1,33 @@
+upstream be {
+  server be:8000 fail_timeout=0;
+}
+
+server {
+  listen 80;
+#Run configure_nginx.sh to set server name or set it here
+  server_name SERVERNAME;
+
+  location ~ /static/* {
+    root /usr/share/nginx/html/django-static;
+  }
+
+  location ~ /(api|admin|info)/* {
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    # enable this if and only if you use HTTPS
+    # proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header Host $http_host;
+    # we don't want nginx trying to do something clever with
+    # redirects, we set the Host: header above already.
+    proxy_redirect off;
+    proxy_pass http://be;
+  }
+
+  location ~ /* {
+  root /usr/share/nginx/html/turnos-backoffice-fe;
+}
+
+charset utf-8;
+
+# Include the basic h5bp config set
+include h5bp/basic.conf;
+}
